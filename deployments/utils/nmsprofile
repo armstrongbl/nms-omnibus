@@ -1,0 +1,110 @@
+#Global Framework Variables
+NCHOME=/opt/IBM/netcool
+NMS_HOME=/opt/viasat/nms
+CONFIG_HOME=${NMS_HOME}/etc/conf
+LOG_HOME=${NMS_HOME}/log
+VAR_HOME=${NMS_HOME}/var
+PATH=${PATH}:${NMS_HOME}/bin
+export NCHOME NMS_HOME CONFIG_HOME LOG_HOME VAR_HOME PATH
+
+#Determine System Role
+SYSTEM_HOSTNAME=`hostname | cut -d"." -f1`
+SYSTEM_ROLE=`cat ${NMS_HOME}/etc/hostmanifest | grep ${SYSTEM_HOSTNAME} | cut -f2`
+echo "System Role is ${SYSTEM_ROLE}"
+
+# Determine Environment Needed
+OBJ_LIST="PrimaryDisplay SecondaryDisplay PrimaryAggregation SecondaryAggregation PrimaryCollection SecondaryCollection B2BOSSGW"
+PRB_LIST="PrimarySNMPProbe SecondarySNMPProbe PrimarySyslogProbe SecondarySyslogProbe"
+IMP_LIST="PrimaryImpact SecondaryImpact"
+NCM_LIST="PrimaryITNCMPresentation PrimaryITNCMWorker SecondaryITNCMPresentation SecondaryITNCMWorker"
+SPL_LIST="PrimarySplunk SecondarySplunk"
+TNM_LIST="PrimaryITNMCore SecondaryITNMCore"
+TIP_LIST="TIPServer"
+TCR_LIST="TCRServer"
+
+[[ $OBJ_LIST =~ $SYSTEM_ROLE ]] && SYSTEM_CLASS='OBJ'
+[[ $PRB_LIST =~ $SYSTEM_ROLE ]] && SYSTEM_CLASS='PRB'
+[[ $IMP_LIST =~ $SYSTEM_ROLE ]] && SYSTEM_CLASS='IMP'
+[[ $NCM_LIST =~ $SYSTEM_ROLE ]] && SYSTEM_CLASS='NCM'
+[[ $SPL_LIST =~ $SYSTEM_ROLE ]] && SYSTEM_CLASS='SPL'
+[[ $TNM_LIST =~ $SYSTEM_ROLE ]] && SYSTEM_CLASS='TNM'
+[[ $TIP_LIST =~ $SYSTEM_ROLE ]] && SYSTEM_CLASS='TIP'
+[[ $TCR_LIST =~ $SYSTEM_ROLE ]] && SYSTEM_CLASS='TCR'
+
+# OMNIbus Probe Framework Variables
+if [ "${SYSTEM_CLASS}" == 'PRB' ]
+then
+    OMNIHOME=${NCHOME}/omnibus
+    PROBE_RULES_HOME=${NMS_HOME}/etc/rules/omnibus
+    NC_RULES_HOME=${PROBE_RULES_HOME}/nckl
+    NMS_RULES_HOME=${PROBE_RULES_HOME}/nms
+    NBNCO_RULES_HOME=${PROBE_RULES_HOME}/nbnco
+    PATH=${PATH}:${NCHOME}/bin:${OMNIHOME}/bin
+    export OMNIHOME PROBE_RULES_HOME NMS_RULES_HOME NC_RULES_HOME NBNCO_RULES_HOME PATH
+fi
+
+# OMNIBus Server Framework Variables
+if [ "${SYSTEM_CLASS}" == 'OBJ' ]
+then
+    OMNIHOME=${NCHOME}/omnibus
+    PATH=${PATH}:${NCHOME}/bin:${OMNIHOME}/bin
+    export OMNIHOME PATH
+fi
+
+#Impact Framework Variables
+if [ "${SYSTEM_CLASS}" == 'IMP' ]
+then
+    IMPACT_HOME=/opt/IBM/tivoli/impact
+    TIPHOME=/opt/IBM/tivoli/tipv2
+    PATH=${PATH}:${IMPACT_HOME}/bin:${TIPHOME}/bin
+    export IMPACT_HOME TIPHOME PATH
+fi
+
+#TIP Framework Variables
+if [ "${SYSTEM_CLASS}" == 'TIP' ]
+then
+    TIPHOME=/opt/IBM/tivoli/tipv2
+    PATH=${PATH}:${TIPHOME}/bin
+    export TIPHOME PATH
+fi
+
+#TCR Framework Variables
+if [ "${SYSTEM_CLASS}" == 'TCR' ]
+then
+    TIPHOME=/opt/IBM/tivoli/tipv2
+    TCRHOME=/opt/IBM/tivoli/tipv2Components/TCRComponent
+    PATH=${PATH}:${TIPHOME}/bin:${TCRHOME}/bin
+    export TIPHOME TCRHOME PATH
+fi
+
+#Oracle Client Framework Variables
+if [ "${SYSTEM_CLASS}" == 'ORA' ] || [ "${SYSTEM_CLASS}" == 'OBJ' ]
+then
+    ORACLE_HOME=/opt/app/oracle/product/11.2.0/client_1
+    if [ "${SYSTEM_CLASS}" == 'OBJ' ]
+    then
+        LD_LIBRARY_PATH=${NCHOME}/platform/linux2x86/lib:${ORACLE_HOME}/lib
+    else
+        LD_LIBRARY_PATH=${ORACLE_HOME}/lib
+    fi
+    # NOTE:  Setting LD_LIBRARY_PATH as adding files to /etc/ld.so.conf.d/xxx does not seem to be working
+    TNS_ADMIN=/opt/viasat/nms/etc/conf/oracle
+    PATH=${PATH}:$ORACLE_HOME/bin
+    export ORACLE_HOME LD_LIBRARY_PATH TNS_ADMIN PATH
+fi
+
+#ITNCM Framework Variables
+if [ "${SYSTEM_CLASS}" == 'NCM' ]
+then
+    NCM_HOME=$NCHOME/ncm
+    PATH=${PATH}:$NCM_HOME/bin
+    export NCM_HOME PATH
+fi
+
+#Splunk Framework Environment Variables
+if [ "${SYSTEM_CLASS}" == 'SPL' ]
+then
+    SPLUNK_HOME=/opt/splunk
+    PATH=${PATH}:${SPLUNK_HOME}/bin
+    export SPLUNK_HOME PATH
+fi

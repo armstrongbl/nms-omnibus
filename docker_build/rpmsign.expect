@@ -1,0 +1,15 @@
+#!/usr/bin/expect -f
+
+set timeout -1
+
+set GPG_NAME [lindex $argv 0]
+set RPM_PATH [lindex $argv 1]
+set GPG_PASS [lindex $argv 2]
+
+spawn rpm --define "_gpg_name $GPG_NAME" --define "_gpg_path /root/.gnupg" --addsign $RPM_PATH
+
+expect "Enter pass phrase:"
+
+send -- "$GPG_PASS\r"
+
+expect eof
